@@ -3,9 +3,18 @@ package com.example.opustest;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import com.example.opustest.utils.OpusDecoder;
+import com.example.opustest.utils.OpusEncoder;
+
+import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,7 +36,8 @@ public class MainActivity extends AppCompatActivity {
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                audioPlayer.play(audioRecorder.consumeBytes());
+                // audioPlayer.play(audioRecorder.consumeBytes());
+                audioPlayer.playOpus(audioRecorder.consumeBytes());
             }
         });
 
@@ -41,10 +51,9 @@ public class MainActivity extends AppCompatActivity {
         recordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                audioRecorder.record();
+                // audioRecorder.record();
+                audioRecorder.recordOpus();
             }
         });
     }
-
-
 }

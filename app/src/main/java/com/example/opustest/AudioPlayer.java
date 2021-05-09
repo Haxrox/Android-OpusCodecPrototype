@@ -7,6 +7,8 @@ import android.util.Log;
 
 import com.example.opustest.utils.OpusDecoder;
 
+import java.util.Arrays;
+
 public class AudioPlayer {
     private static final String TAG = "AudioPlayer";
 
@@ -24,40 +26,50 @@ public class AudioPlayer {
     //x2 because PCM_16 bit = 2 bytes per sample  //320; //opus_encode() - pcm param-> frame_size*sizeof(opus_int16)
     public final int FRAME_SIZE = SAMPLES_PER_SECOND * 2;
     public final int BUF_SIZE = FRAME_SIZE / 2;
-    // min buffer size
-    int minBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
 
     private AudioTrack track;
     private OpusDecoder opusDecoder;
 
     public AudioPlayer() {
-        Log.e(TAG, "Constructor called");
+        // min buffer size
+        int minBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
         // init audio track
-        track = new AudioTrack(AudioManager.STREAM_VOICE_CALL,
+        track = new AudioTrack(AudioManager.STREAM_MUSIC,
                 SAMPLE_RATE,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 minBufSize,
                 AudioTrack.MODE_STREAM);
+        track.play();
 
         // init opus decoder
         opusDecoder = new OpusDecoder();
         opusDecoder.init(SAMPLE_RATE, 1, FRAME_SIZE / 2);
+
+        Log.e(TAG, "AudioPlayer + OpusDecoder initialized | MinBufferSize: " + minBufSize);
+    }
+
+    // playOpus
+    public void playOpus(byte[] data) {
+        Thread audioPlaybackThread = new Thread(new Runnable() {
+            public void run() {
+                synchronized(audioThreadPlaybackLock) {
+                    short[] decodedData = new short[BUF_SIZE];
+                    int decoded = opusDecoder.decode(data, decodedData);
+                    Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data) + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
+                    track.write(decodedData, 0, decoded, AudioTrack.WRITE_BLOCKING);
+                }
+            }});
+        audioPlaybackThread.start();
     }
 
     // play
     public void play(byte[] data) {
-        Log.e(TAG, "Playing audio");
-        Thread audioPlaybackThread = new Thread(new Runnable()
-        {
-            public void run()
-            {
-                synchronized(audioThreadPlaybackLock)
-                {
-                    short[] decodedData = new short[BUF_SIZE];
-                    int decoded = opusDecoder.decode(data, decodedData);
-                    Log.i(TAG, "Data: " + data.length + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
-                    track.write(decodedData, 0, decoded, AudioTrack.WRITE_BLOCKING);
+        Thread audioPlaybackThread = new Thread(new Runnable() {
+            public void run() {
+                synchronized(audioThreadPlaybackLock) {
+                    // Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data) + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
+                    track.write(data, 0, data.length, AudioTrack.WRITE_BLOCKING);
                 }
             }});
         audioPlaybackThread.start();

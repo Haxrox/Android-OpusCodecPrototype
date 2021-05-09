@@ -41,7 +41,7 @@ public class AudioRecorder {
     }
 
     // record and encode via opus encoder
-    public void record(){
+    public void recordOpus(){
         Log.e(TAG, "Recording audio");
         Thread audioCaptureThread = new Thread(new Runnable() {
             public void run() {
@@ -59,6 +59,8 @@ public class AudioRecorder {
                 opusEncoder = new OpusEncoder();
                 opusEncoder.init(SAMPLE_RATE, 1, FRAME_SIZE / 2);
 
+                Log.e(TAG, "AudioRecord + OpusEncoder initialized | MinBufferSize: " + minBufSize);
+
                 short[] recordedData = new short[BUF_SIZE];
                 byte[] encodedData = new byte[1024];
 
@@ -69,12 +71,14 @@ public class AudioRecorder {
                     int encoded = opusEncoder.encode(recordedData, encodedData);
                     Log.i(TAG, "RecordedData: " + recordedData.length + " | Encoded: " + encoded + " | EncodedData: " + encodedData.length);
                     try {
+                        /*
                         Thread.sleep(1000);
                         byte[] audioData = new byte[encoded];
                         System.arraycopy(encodedData, 0, audioData, 0, encoded);
                         audioPlayer.play(audioData);
-                        // byteArrayOutputStream.write(encodedData, 0, encoded);
-                        // Log.i(TAG, "ByteArrayOutputStream: " + byteArrayOutputStream.size());
+                         */
+                        byteArrayOutputStream.write(encodedData, 0, encoded);
+                        Log.i(TAG, "ByteArrayOutputStream: " + byteArrayOutputStream.size());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -83,6 +87,49 @@ public class AudioRecorder {
                 recorder.stop();
                 recorder.release();
                 opusEncoder.close();
+            }
+        });
+        audioCaptureThread.start();
+    }
+
+    public void record() {
+        Log.e(TAG, "Recording audio");
+        Thread audioCaptureThread = new Thread(new Runnable() {
+            public void run() {
+                capturingAudio = true;
+                // initialize audio recorder
+                int minBufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
+                        SAMPLE_RATE,
+                        AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT,
+                        minBufSize);
+                recorder.startRecording();
+
+                Log.e(TAG, "AudioRecord initialized | MinBufferSize: " + minBufSize);
+
+                byte[] recordedData = new byte[BUF_SIZE];
+
+                while (capturingAudio) {
+                    // read to buffer
+                    // compress with codec
+                    recorder.read(recordedData, 0, recordedData.length);
+                    try {
+                        /*
+                        Thread.sleep(1000);
+                        byte[] audioData = new byte[encoded];
+                        System.arraycopy(encodedData, 0, audioData, 0, encoded);
+                        audioPlayer.play(audioData);
+                         */
+                        byteArrayOutputStream.write(recordedData, 0, recordedData.length);
+                        Log.i(TAG, "ByteArrayOutputStream: " + byteArrayOutputStream.size());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                recorder.stop();
+                recorder.release();
             }
         });
         audioCaptureThread.start();
