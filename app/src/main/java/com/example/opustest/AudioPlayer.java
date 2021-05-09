@@ -51,12 +51,15 @@ public class AudioPlayer {
 
     // playOpus
     public void playOpus(byte[] data) {
+        Log.e(TAG, "Play Opus audio data");
         Thread audioPlaybackThread = new Thread(new Runnable() {
             public void run() {
                 synchronized(audioThreadPlaybackLock) {
                     short[] decodedData = new short[BUF_SIZE];
                     int decoded = opusDecoder.decode(data, decodedData);
-                    Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data) + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
+                    Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data));
+                    Log.i(TAG, "Decoded: " + decoded);
+                    Log.i(TAG, "Decoded Data ["+ decodedData.length + "]: " + Arrays.toString(decodedData));
                     track.write(decodedData, 0, decoded, AudioTrack.WRITE_BLOCKING);
                 }
             }});
@@ -65,6 +68,7 @@ public class AudioPlayer {
 
     // play
     public void play(byte[] data) {
+        Log.e(TAG, "Play audio data");
         Thread audioPlaybackThread = new Thread(new Runnable() {
             public void run() {
                 synchronized(audioThreadPlaybackLock) {

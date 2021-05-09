@@ -8,6 +8,7 @@ import android.util.Log;
 import com.example.opustest.utils.OpusEncoder;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
 
 public class AudioRecorder {
@@ -69,16 +70,17 @@ public class AudioRecorder {
                     // compress with codec
                     recorder.read(recordedData, 0, recordedData.length);
                     int encoded = opusEncoder.encode(recordedData, encodedData);
-                    Log.i(TAG, "RecordedData: " + recordedData.length + " | Encoded: " + encoded + " | EncodedData: " + encodedData.length);
+                    Log.i(TAG, "RecordedData [" + recordedData.length + "]: " + Arrays.toString(recordedData));
+                    Log.i(TAG, "Encoded: " + encoded);
+                    Log.i(TAG, "Encoded Data ["+ encodedData.length + "]: " + Arrays.toString(encodedData));
                     try {
-                        /*
-                        Thread.sleep(1000);
                         byte[] audioData = new byte[encoded];
                         System.arraycopy(encodedData, 0, audioData, 0, encoded);
-                        audioPlayer.play(audioData);
-                         */
+                        audioPlayer.playOpus(audioData);
+                        /*
                         byteArrayOutputStream.write(encodedData, 0, encoded);
                         Log.i(TAG, "ByteArrayOutputStream: " + byteArrayOutputStream.size());
+                         */
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -115,12 +117,6 @@ public class AudioRecorder {
                     // compress with codec
                     recorder.read(recordedData, 0, recordedData.length);
                     try {
-                        /*
-                        Thread.sleep(1000);
-                        byte[] audioData = new byte[encoded];
-                        System.arraycopy(encodedData, 0, audioData, 0, encoded);
-                        audioPlayer.play(audioData);
-                         */
                         byteArrayOutputStream.write(recordedData, 0, recordedData.length);
                         Log.i(TAG, "ByteArrayOutputStream: " + byteArrayOutputStream.size());
                     } catch (Exception e) {
