@@ -78,4 +78,24 @@ public class AudioPlayer {
             }});
         audioPlaybackThread.start();
     }
+
+    // play
+    public void play(short[] data) {
+        Log.e(TAG, "Play audio data");
+        Thread audioPlaybackThread = new Thread(new Runnable() {
+            public void run() {
+                synchronized(audioThreadPlaybackLock) {
+                    // Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data) + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
+                    track.write(data, 0, data.length, AudioTrack.WRITE_BLOCKING);
+                }
+            }});
+        audioPlaybackThread.start();
+    }
+
+    // Decode
+    public short[] decode(byte[] data) {
+        short[] decodedData = new short[1024];
+        int decoded = opusDecoder.decode(data, decodedData);
+        return Arrays.copyOfRange(decodedData, 0, decoded);
+    }
 }

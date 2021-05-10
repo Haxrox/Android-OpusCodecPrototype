@@ -14,6 +14,7 @@ import android.widget.Button;
 import com.example.opustest.utils.OpusDecoder;
 import com.example.opustest.utils.OpusEncoder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
@@ -39,10 +40,20 @@ public class MainActivity extends AppCompatActivity {
                 // audioPlayer.play(audioRecorder.consumeBytes());
                 // audioPlayer.playOpus(audioRecorder.consumeBytes());
                 byte[] audioData = audioRecorder.consumeBytes();
+                short[] decodedData = audioPlayer.decode(audioData);
+                audioData = audioRecorder.consumeBytes();
                 while (audioData != null) {
+                    /*
                     audioPlayer.playOpus(audioData);
+                     */
+                    short[] decoded = audioPlayer.decode(audioData);
+                    short[] audioBuffer = new short[decodedData.length + decoded.length];
+                    System.arraycopy(decodedData, 0, audioBuffer, 0, decodedData.length);
+                    System.arraycopy(decoded, 0, audioBuffer, decodedData.length, decoded.length);
+                    decodedData = audioBuffer;
                     audioData = audioRecorder.consumeBytes();
                 }
+                audioPlayer.play(decodedData);
             }
         });
 
