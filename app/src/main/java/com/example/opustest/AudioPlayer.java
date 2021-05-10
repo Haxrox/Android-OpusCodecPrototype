@@ -12,10 +12,8 @@ import java.util.Arrays;
 public class AudioPlayer {
     private static final String TAG = "AudioPlayer";
 
-    static Object audioThreadPlaybackLock = new Object();
-
-    public static final int SAMPLE_RATE = 8000;
-    public final int pTime = 20;//packetization times in ms
+    public static final int SAMPLE_RATE = 48000; // 8000;
+    public final int pTime = 40;//packetization times in ms
 
     // frames per second, depends on packetization time
     public final int FRAME_RATE = 1000 / pTime;
@@ -54,41 +52,38 @@ public class AudioPlayer {
         Log.e(TAG, "Play Opus audio data");
         Thread audioPlaybackThread = new Thread(new Runnable() {
             public void run() {
-                synchronized(audioThreadPlaybackLock) {
-                    short[] decodedData = new short[1024];
-                    int decoded = opusDecoder.decode(data, decodedData);
-                    Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data));
-                    Log.i(TAG, "Decoded: " + decoded);
-                    Log.i(TAG, "Decoded Data ["+ decodedData.length + "]: " + Arrays.toString(decodedData));
-                    track.write(decodedData, 0, decoded, AudioTrack.WRITE_BLOCKING);
-                }
-            }});
+                short[] decodedData = new short[1024];
+                int decoded = opusDecoder.decode(data, decodedData);
+                Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data));
+                Log.i(TAG, "Decoded: " + decoded);
+                Log.i(TAG, "Decoded Data ["+ decodedData.length + "]: " + Arrays.toString(decodedData));
+                track.write(decodedData, 0, decoded);
+            }
+        });
         audioPlaybackThread.start();
     }
 
     // play
     public void play(byte[] data) {
-        Log.e(TAG, "Play audio data");
+        Log.e(TAG, "Play audio data: " + data.length);
         Thread audioPlaybackThread = new Thread(new Runnable() {
             public void run() {
-                synchronized(audioThreadPlaybackLock) {
-                    // Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data) + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
-                    track.write(data, 0, data.length, AudioTrack.WRITE_BLOCKING);
-                }
-            }});
+                // Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data) + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
+                track.write(data, 0, data.length);
+            }
+        });
         audioPlaybackThread.start();
     }
 
     // play
     public void play(short[] data) {
-        Log.e(TAG, "Play audio data");
+        Log.e(TAG, "Play audio data: " + data.length);
         Thread audioPlaybackThread = new Thread(new Runnable() {
             public void run() {
-                synchronized(audioThreadPlaybackLock) {
-                    // Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data) + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
-                    track.write(data, 0, data.length, AudioTrack.WRITE_BLOCKING);
-                }
-            }});
+                // Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data) + " | Decoded: " + decoded + " | decodedData: " + decodedData.length);
+                track.write(data, 0, data.length);
+            }
+        });
         audioPlaybackThread.start();
     }
 

@@ -16,8 +16,8 @@ import java.util.Queue;
 public class AudioRecorder {
     private static final String TAG = "AudioRecorder";
 
-    public static final int SAMPLE_RATE = 8000;
-    public final int pTime = 20;//packetization times in ms
+    public static final int SAMPLE_RATE = 48000; // 8000;
+    public final int pTime = 40; // packetization times in ms
 
     // frames per second, depends on packetization time
     public final int FRAME_RATE = 1000 / pTime;
@@ -34,7 +34,6 @@ public class AudioRecorder {
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     Queue<byte[]> mAudioQueue = new LinkedList<byte[]>();
-    // short[] mAudioData;
 
     AudioPlayer audioPlayer;
 
@@ -42,6 +41,7 @@ public class AudioRecorder {
 
     public AudioRecorder(AudioPlayer audioPlayer) {
         Log.i(TAG, "Constructor called");
+        Log.e(TAG, "FrameSize: " + FRAME_SIZE);
         this.audioPlayer = audioPlayer;
     }
 
@@ -62,7 +62,7 @@ public class AudioRecorder {
 
                 // Init OpusEncoder
                 opusEncoder.init(SAMPLE_RATE, 1, FRAME_SIZE/2);
-                Log.e(TAG, "AudioRecord + OpusEncoder initialized | MinBufferSize: " + minBufSize);
+                Log.e(TAG, "AudioRecord + OpusEncoder initialized | MinBufferSize: " + minBufSize + " | FrameSize: " + (FRAME_SIZE/2));
 
                 short[] recordedData = new short[BUF_SIZE];
                 byte[] encodedData = new byte[1024];
@@ -73,19 +73,9 @@ public class AudioRecorder {
                     int encoded = opusEncoder.encode(recordedData, encodedData);
                     Log.i(TAG, "Encoded: " + encoded);
                     Log.i(TAG, "Encoded Data ["+ encodedData.length + "]: " + Arrays.toString(encodedData));
-                    mAudioQueue.add(Arrays.copyOfRange(encodedData, 0, encoded));
-                    /* TRY: Store raw data and encode when consuming
-                    if (mAudioData != null) {
-                        // Concat the old data with the new data
-                        short[] audioBuffer = new short[mAudioData.length + recordedData.length];
-                        System.arraycopy(mAudioData, 0, audioBuffer, 0, mAudioData.length);
-                        System.arraycopy(recordedData, 0, audioBuffer, mAudioData.length, recordedData.length);
-                        mAudioData = audioBuffer;
-                    } else {
-                        // mAudioData is null.
-                        mAudioData = recordedData;
+                    if (encoded > 0) {
+                        mAudioQueue.add(Arrays.copyOfRange(encodedData, 0, encoded));
                     }
-                     */
                 }
 
                 recorder.stop();
@@ -138,14 +128,5 @@ public class AudioRecorder {
 
     public byte[] consumeBytes() {
         return mAudioQueue.poll();
-        /* TRY: Encode when consuming
-        byte[] encodedData = new byte[mAudioData.length];
-        // Init OpusEncoder
-        opusEncoder.init(SAMPLE_RATE, 1, FRAME_SIZE / 2);
-        int encodedBytes = opusEncoder.encode(mAudioData, encodedData);
-        Log.e(TAG, "Consume bytes: " + mAudioData.length + " | EncodedBytes: " + encodedBytes);
-        mAudioData = null;
-        return Arrays.copyOfRange(encodedData, 0, encodedBytes);
-         */
     }
 }
