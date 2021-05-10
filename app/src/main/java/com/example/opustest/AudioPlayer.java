@@ -55,7 +55,7 @@ public class AudioPlayer {
         Thread audioPlaybackThread = new Thread(new Runnable() {
             public void run() {
                 synchronized(audioThreadPlaybackLock) {
-                    short[] decodedData = new short[BUF_SIZE];
+                    short[] decodedData = new short[1024];
                     int decoded = opusDecoder.decode(data, decodedData);
                     Log.i(TAG, "Data [" + data.length + "]: " + Arrays.toString(data));
                     Log.i(TAG, "Decoded: " + decoded);

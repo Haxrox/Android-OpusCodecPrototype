@@ -37,7 +37,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // audioPlayer.play(audioRecorder.consumeBytes());
-                audioPlayer.playOpus(audioRecorder.consumeBytes());
+                // audioPlayer.playOpus(audioRecorder.consumeBytes());
+                byte[] audioData = audioRecorder.consumeBytes();
+                while (audioData != null) {
+                    audioPlayer.playOpus(audioData);
+                    audioData = audioRecorder.consumeBytes();
+                }
             }
         });
 

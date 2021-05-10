@@ -9,6 +9,8 @@ import com.example.opustest.utils.OpusEncoder;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 
 
 public class AudioRecorder {
@@ -28,9 +30,11 @@ public class AudioRecorder {
     public final int BUF_SIZE = FRAME_SIZE / 2;
 
     private AudioRecord recorder;
-    private OpusEncoder opusEncoder;
+    private OpusEncoder opusEncoder = new OpusEncoder();
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    Queue<byte[]> mAudioQueue = new LinkedList<byte[]>();
+    // short[] mAudioData;
 
     AudioPlayer audioPlayer;
 
@@ -56,39 +60,36 @@ public class AudioRecorder {
                         minBufSize);
                 recorder.startRecording();
 
-                // init opus encoder
-                opusEncoder = new OpusEncoder();
-                opusEncoder.init(SAMPLE_RATE, 1, FRAME_SIZE / 2);
-
+                // Init OpusEncoder
+                opusEncoder.init(SAMPLE_RATE, 1, FRAME_SIZE/2);
                 Log.e(TAG, "AudioRecord + OpusEncoder initialized | MinBufferSize: " + minBufSize);
 
                 short[] recordedData = new short[BUF_SIZE];
                 byte[] encodedData = new byte[1024];
 
                 while (capturingAudio) {
-                    // read to buffer
-                    // compress with codec
                     recorder.read(recordedData, 0, recordedData.length);
-                    int encoded = opusEncoder.encode(recordedData, encodedData);
                     Log.i(TAG, "RecordedData [" + recordedData.length + "]: " + Arrays.toString(recordedData));
+                    int encoded = opusEncoder.encode(recordedData, encodedData);
                     Log.i(TAG, "Encoded: " + encoded);
                     Log.i(TAG, "Encoded Data ["+ encodedData.length + "]: " + Arrays.toString(encodedData));
-                    try {
-                        byte[] audioData = new byte[encoded];
-                        System.arraycopy(encodedData, 0, audioData, 0, encoded);
-                        audioPlayer.playOpus(audioData);
-                        /*
-                        byteArrayOutputStream.write(encodedData, 0, encoded);
-                        Log.i(TAG, "ByteArrayOutputStream: " + byteArrayOutputStream.size());
-                         */
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    mAudioQueue.add(Arrays.copyOfRange(encodedData, 0, encoded));
+                    /* TRY: Store raw data and encode when consuming
+                    if (mAudioData != null) {
+                        // Concat the old data with the new data
+                        short[] audioBuffer = new short[mAudioData.length + recordedData.length];
+                        System.arraycopy(mAudioData, 0, audioBuffer, 0, mAudioData.length);
+                        System.arraycopy(recordedData, 0, audioBuffer, mAudioData.length, recordedData.length);
+                        mAudioData = audioBuffer;
+                    } else {
+                        // mAudioData is null.
+                        mAudioData = recordedData;
                     }
+                     */
                 }
 
                 recorder.stop();
                 recorder.release();
-                opusEncoder.close();
             }
         });
         audioCaptureThread.start();
@@ -136,9 +137,15 @@ public class AudioRecorder {
     }
 
     public byte[] consumeBytes() {
-        byte[] data = byteArrayOutputStream.toByteArray();
-        byteArrayOutputStream.reset();
-        Log.e(TAG, "Consume bytes: " + data.length + " | ByteArrayOutputStream: " + byteArrayOutputStream.size());
-        return data;
+        return mAudioQueue.poll();
+        /* TRY: Encode when consuming
+        byte[] encodedData = new byte[mAudioData.length];
+        // Init OpusEncoder
+        opusEncoder.init(SAMPLE_RATE, 1, FRAME_SIZE / 2);
+        int encodedBytes = opusEncoder.encode(mAudioData, encodedData);
+        Log.e(TAG, "Consume bytes: " + mAudioData.length + " | EncodedBytes: " + encodedBytes);
+        mAudioData = null;
+        return Arrays.copyOfRange(encodedData, 0, encodedBytes);
+         */
     }
 }
